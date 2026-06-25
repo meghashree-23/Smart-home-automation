@@ -1,0 +1,44 @@
+// --- Pin Configurations ---
+const int PIR_PIN = 13;    // GPIO 13 connected to PIR Sensor OUT
+const int LIGHT_PIN = 12;  // GPIO 12 connected to Relay / Smart Light IN
+
+// --- Timer Variables ---
+unsigned long motionTimeOut = 10000; // Time light stays on after motion stops (10 seconds)
+unsigned long lastMotionTime = 0;    // Stores the last time motion was detected
+bool lightIsOn = false;
+
+void setup() {
+  Serial.begin(115200);
+  
+  pinMode(PIR_PIN, INPUT);
+  pinMode(LIGHT_PIN, OUTPUT);
+  
+  // Ensure light starts turned off
+  digitalWrite(LIGHT_PIN, LOW); 
+  
+  Serial.println("--- Smart Light System Initialized ---");
+}
+
+void loop() {
+  int motionDetected = digitalRead(PIR_PIN);
+
+  if (motionDetected == HIGH) {
+    // Motion detected!
+    if (!lightIsOn) {
+      Serial.println("🏃 Motion Detected! Turning light ON.");
+      digitalWrite(LIGHT_PIN, HIGH); // Turn light on
+      lightIsOn = true;
+    }
+    // Constantly refresh the timer while motion is happening
+    lastMotionTime = millis(); 
+  } else {
+    // No motion currently detected, check if holding time has expired
+    if (lightIsOn && (millis() - lastMotionTime >= motionTimeOut)) {
+      Serial.println("⏳ No motion for 10 seconds. Turning light OFF.");
+      digitalWrite(LIGHT_PIN, LOW); // Turn light off
+      lightIsOn = false;
+    }
+  }
+
+  delay(100); // Small stability delay
+}

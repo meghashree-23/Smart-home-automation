@@ -1,0 +1,45 @@
+#include <ESP32Servo.h>
+
+// Define Pins
+#define RAIN_PIN 34       // Analog pin for Rain Sensor
+#define ROOF_SERVO_PIN 32 // PWM pin for Roof Servo
+
+Servo roofServo;
+
+// Threshold for rain detection (0 = completely wet, 4095 = completely dry)
+// ESP32 has a 12-bit ADC, so values range from 0 to 4095.
+const int rainThreshold = 2000; 
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Attach the servo motor to its control pin
+  roofServo.attach(ROOF_SERVO_PIN);
+  
+  // Set initial position to 0 degrees (Roof open / Clothes exposed)
+  roofServo.write(0); 
+  Serial.println("System Initialized. Roof is OPEN (0 degrees).");
+}
+
+void loop() {
+  // Read the analog value from the rain sensor
+  int rainValue = analogRead(RAIN_PIN);
+  
+  // Print the value to the Serial Monitor so you can calibrate it
+  Serial.print("Rain Sensor Value: ");
+  Serial.println(rainValue);
+
+  // Check if water is detected
+  if (rainValue < rainThreshold) {
+    // It's raining! Turn the servo 40 degrees to move the stick and cover the clothes
+    roofServo.write(90);
+    Serial.println("RAINING! Moving servo 40 degrees to PROTECT clothes.");
+  } else {
+    // It's dry. Bring the servo back to 0 degrees
+    roofServo.write(-45);
+    Serial.println("DRY. Moving servo back to -45 degrees.");
+  }
+
+  // Wait 1 second before checking again to prevent jerky movements
+  delay(1000); 
+}

@@ -1,0 +1,43 @@
+// --- Pin Configurations ---
+const int SMOKE_DIGITAL_PIN = 4;  // GPIO 4 for Instant Digital Alert
+const int SMOKE_ANALOG_PIN = 34;  // GPIO 34 to monitor exact smoke levels
+const int BUZZER_PIN = 5;         // GPIO 5 for the Buzzer
+
+void setup() {
+  // Start serial communication at 115200 baud
+  Serial.begin(115200);
+  delay(1000); // Give serial monitor a moment to initialize
+  
+  // Set up pin modes
+  pinMode(SMOKE_DIGITAL_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  
+  // Ensure buzzer starts turned off
+  digitalWrite(BUZZER_PIN, LOW);
+  
+  Serial.println("--- Smoke Detector System Initialized ---");
+}
+
+void loop() {
+  // 1. Read values from the sensor
+  int digitalValue = digitalRead(SMOKE_DIGITAL_PIN);
+  int analogValue = analogRead(SMOKE_ANALOG_PIN);
+
+  // 2. Print data to Serial Monitor (Set your Serial Monitor to 115200 Baud)
+  Serial.print("Air Quality (Analog Value): ");
+  Serial.print(analogValue);
+  Serial.print("  |  Trigger State (Digital): ");
+  Serial.println(digitalValue);
+
+  // 3. Alarm Logic
+  // NOTE: Standard MQ sensors drop to LOW when smoke triggers the limit.
+  // If your buzzer stays on constantly, flip 'LOW' to 'HIGH' in the line below.
+  if (digitalValue == LOW) {
+    Serial.println("🔥 ALERT! Smoke Detected! 🔥");
+    digitalWrite(BUZZER_PIN, HIGH); // Sound the buzzer
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);  // Turn off the buzzer
+  }
+
+  delay(250); // Checks 4 times every second
+}

@@ -1,0 +1,58 @@
+// Define Pins
+#define TRIG_PIN 5      // Ultrasonic Trigger pin
+#define ECHO_PIN 17     // Ultrasonic Echo pin
+#define BUZZER_PIN 21   // Same Buzzer Pin used before
+
+// Variables for distance calculation
+long duration;
+int distance;
+
+// Safety distance threshold in centimeters (Change this if you want)
+const int safetyDistance = 10; 
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Initialize Pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  
+  digitalWrite(BUZZER_PIN, LOW); // Turn off buzzer initially
+  Serial.println("Smart Parking System Initialized.");
+}
+
+void loop() {
+  // 1. Clear the TRIG_PIN
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  
+  // 2. Set the TRIG_PIN HIGH for 10 microseconds to send out the sound wave
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  
+  // 3. Read the ECHO_PIN; pulseIn returns the sound wave travel time in microseconds
+  duration = pulseIn(ECHO_PIN, HIGH);
+  
+  // 4. Calculate the distance in centimeters
+  // Speed of sound is ~0.034 cm/us. Divide by 2 because the wave goes out and back.
+  distance = duration * 0.034 / 2;
+  
+  // Print distance to Serial Monitor for testing
+  Serial.print("Distance to wall: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // 5. Crash Prevention Logic
+  // If a car is closer than our safety limit (and handle ghost 0cm readings)
+  if (distance > 0 && distance <= safetyDistance) {
+    Serial.println("⚠️ WARNING: TOO CLOSE TO WALL! STOP! ⚠️");
+    digitalWrite(BUZZER_PIN, HIGH); // Sound the buzzer continuously
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);  // Silence when safe
+  }
+
+  // Check the distance every 200ms for fast, real-time tracking
+  delay(200); 
+}

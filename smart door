@@ -1,0 +1,63 @@
+#include <ESP32Servo.h>
+
+// Define Pins
+#define PIR_PIN 19        // PIR Sensor Output pin
+#define DOOR_SERVO_PIN 33 // PWM pin for Door Servo
+#define BUZZER_PIN 21     // Pin for the Buzzer
+
+Servo doorServo;
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Initialize Pins
+  pinMode(PIR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  
+  // Attach the servo motor
+  doorServo.attach(DOOR_SERVO_PIN);
+  
+  // Set initial position to 0 degrees (Door Closed)
+  doorServo.write(0); 
+  digitalWrite(BUZZER_PIN, LOW); // Ensure buzzer is off
+  
+  Serial.println("Warm up: Waiting for PIR sensor to stabilize...");
+  delay(10000); // PIR sensors need a few seconds to stabilize when powered on
+  Serial.println("System Ready. Monitoring for motion...");
+}
+
+void loop() {
+  // Read the digital state of the PIR sensor (HIGH = Motion, LOW = No Motion)
+  int motionDetected = digitalRead(PIR_PIN);
+
+  if (motionDetected == HIGH) {
+    Serial.println("MOTION DETECTED!");
+    
+    // 1. Give a buzzer sound (Beep for 500 milliseconds)
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(500);
+    digitalWrite(BUZZER_PIN, LOW);
+    
+    // 2. Turn the servo to 90 degrees to open the door
+    doorServo.write(90);
+    Serial.println("Door is now OPEN (90 degrees). Starting 15-second timer...");
+    
+    // 3. Keep the door open for exactly 20 seconds (20000 milliseconds)
+    delay(15000); 
+    
+    // 4. Automatically close the door back to 0 degrees
+    doorServo.write(0);
+    Serial.println("Timer finished. Door is now CLOSED (0 degrees).");
+    
+    // Small cooldown delay to prevent the sensor from immediately re-triggering 
+    // from the movement of the door closing itself
+    delay(2000); 
+    
+  } else {
+    // If no motion, ensure the door stays safely at 0 degrees
+    doorServo.write(-90);
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+
+  delay(200); // Small delay to optimize background processing
+}
